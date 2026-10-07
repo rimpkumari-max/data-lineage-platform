@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data Lineage Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#16191c;--muted:#5d666d;--line:#d9dee2;--bg:#f5f6f7;--panel:#fff;--green:#3d7a0a;--green-bg:#e9f3dc;--red:#a3261c;--red-bg:#fbe9e7;--amber:#8a5a00;--amber-bg:#fdf1d6;--blue:#1d4f7a;--blue-bg:#e5eff8}
+*{box-sizing:border-box}
+body{margin:0;font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.5;font-variant-numeric:tabular-nums}
+header{background:#000;color:#fff;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header h1{margin:0;font-size:18px;font-weight:600}header p{margin:0;color:#b8c0c6;font-size:13px}
+main{max-width:1320px;margin:0 auto;padding:24px 28px 60px}
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--ink);background:var(--panel);color:var(--ink);padding:6px 12px}
+button:hover{background:#eef0f1}button.primary{background:var(--green);border-color:var(--green);color:#fff;font-weight:500}button.primary:hover{background:#2f6207}
+header button{border-color:#fff;background:transparent;color:#fff}header button.primary{background:var(--green);border-color:var(--green)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #86bc25;outline-offset:2px}button:disabled{opacity:.5;cursor:not-allowed}
+.toolbar{display:flex;gap:12px;align-items:center}.toolbar label{font-size:13px;color:#d3d9de;display:flex;gap:6px;align-items:center}
+h2{font-size:15px;margin:32px 0 6px;font-weight:600}.hint{color:var(--muted);margin:0 0 12px}
+.pipeline{display:grid;grid-template-columns:repeat(6,1fr);background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.stage{padding:14px;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:4px}.stage:last-child{border-right:0}
+.stage h3{margin:0;font-size:14px;font-weight:600}.stage .zone{color:var(--muted);font-size:12px}
+.flow{display:flex;align-items:baseline;gap:6px;margin:6px 0 2px}.flow .out{font-size:28px;font-weight:600;line-height:1}.flow .in{color:var(--muted);font-size:12px}
+.stage .rej{font-size:12px;min-height:34px;color:var(--muted)}.rej b{color:var(--red)}
+.stage.done{box-shadow:inset 0 3px 0 var(--green)}.stage.pending{background:#fafbfb}
+.stage .row{display:flex;gap:8px;margin-top:auto;padding-top:8px;align-items:center}.docs{font-size:12px}.docs a{color:var(--muted)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{border:0;border-bottom:3px solid transparent;border-radius:0;background:none;padding:8px 14px;color:var(--muted)}
+.tab[aria-selected=true]{border-bottom-color:var(--green);color:var(--ink);font-weight:600}
+.panel{background:var(--panel);border:1px solid var(--line);border-top:0;border-radius:0 0 6px 6px;padding:16px;overflow-x:auto;min-height:120px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap;vertical-align:top}
+th{background:#f0f2f3;font-weight:600}td.wrap{white-space:normal;min-width:260px}
+.pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:500}
+.pill.ok{background:var(--green-bg);color:var(--green)}.pill.bad{background:var(--red-bg);color:var(--red)}.pill.warn{background:var(--amber-bg);color:var(--amber)}.pill.info{background:var(--blue-bg);color:var(--blue)}
+.kpis{display:flex;gap:28px;flex-wrap:wrap;margin-bottom:16px}.kpi .v{font-size:24px;font-weight:600;line-height:1.1}.kpi .l{color:var(--muted);font-size:12px}
+.empty{color:var(--muted);padding:20px 0}.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.ctl{border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:10px}.ctl summary{cursor:pointer;display:flex;gap:10px;align-items:center}
+.ctl .n{color:var(--muted);font-size:12px;margin-left:auto}
+.trace-form{display:flex;gap:8px;margin-bottom:12px}input,select{font:inherit;padding:6px 10px;border:1px solid var(--ink);border-radius:4px}
+td.derived{background:var(--amber-bg)}td.miss{color:#9aa3a9}
+.val{font-weight:600}.fld{color:var(--muted);font-size:12px;display:block}
+pre.mm{background:#f0f2f3;padding:12px;border-radius:4px;overflow:auto;font-size:12px;margin:0}
+#mmOut svg{max-width:100%;height:auto}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:10px 18px;border-radius:4px;display:none}
+.src-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.src{display:flex;flex-direction:column;gap:6px}
+.src .hint{margin:0;font-size:12px}.src-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.src-actions label{font-size:13px;display:flex;gap:6px;align-items:center}
+.filebtn{border:1px solid var(--ink);border-radius:4px;padding:6px 12px;cursor:pointer;background:var(--panel)}.filebtn:hover{background:#eef0f1}
+.filebtn input{position:absolute;width:1px;height:1px;opacity:0}.filebtn:focus-within{outline:3px solid #86bc25;outline-offset:2px}
+@media (max-width:1000px){.src-grid{grid-template-columns:1fr}}
+@media (max-width:1000px){.pipeline{grid-template-columns:1fr 1fr}.stage{border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Data Lineage Platform</h1><p>DAO (SOO) to YXY (SOR) to AOC (APP) to MIS Report, with a catalog and independent controls</p></div>
+  <div class="toolbar">
+    <label><input type="checkbox" id="fault"> Inject a fault (demo)</label>
+    <button id="reset">Reset</button>
+    <button id="runAll" class="primary">Run full pipeline</button>
+  </div>
+</header>
+<main>
+  <h2 style="margin-top:0">Six applications</h2>
+  <p class="hint">Each is its own FastAPI application. The pipeline moves the records through DAO, YXY, AOC and MIS Report, and the controls app checks the result against the source.</p>
+  <section class="pipeline" id="pipeline"></section>
+
+  <h2>Source data and parameters</h2>
+  <p class="hint">The app starts with built-in sample data. Upload your own CSV files to run the same transformations on them. The parameters are the YXY filter values.</p>
+  <div class="box" id="sources">
+    <div class="src-grid">
+      <div class="src"><b>DAO extract</b><span id="daoSrc" class="hint"></span>
+        <div class="src-actions"><a href="/dao/sample.csv"><button type="button">Download sample CSV</button></a>
+        <label class="filebtn">Upload CSV<input type="file" accept=".csv" id="daoFile"></label></div></div>
+      <div class="src"><b>YXY account master</b><span id="accSrc" class="hint"></span>
+        <div class="src-actions"><a href="/yxy/account-master.csv"><button type="button">Download sample CSV</button></a>
+        <label class="filebtn">Upload CSV<input type="file" accept=".csv" id="accFile"></label></div></div>
+      <div class="src"><b>YXY filter parameters</b>
+        <div class="src-actions"><label>File month <input id="pMonth" size="11" aria-label="File month"></label>
+        <label>Business group <input id="pGroup" size="6" aria-label="Business group"></label></div>
+        <div class="src-actions"><button type="button" id="useSample">Use sample data again</button></div></div>
+    </div>
+  </div>
+
+  <h2>Layer output</h2>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="panel" id="panel" role="tabpanel"></div>
+
+  <h2>Trace one record</h2>
+  <p class="hint">Enter a Clarity ID to see its field at every hop, using the physical names from the lineage sheet. With the sample data, try 100025 (filtered out), 100030 (rejected) or 100004 (a Paid in Full account).</p>
+  <form class="trace-form" id="traceForm"><input id="traceId" value="100004" aria-label="Clarity ID"><button type="submit">Trace</button></form>
+  <div class="box" id="trace"><div class="empty">Run the pipeline, then trace a record.</div></div>
+
+  <h2>Lineage diagram</h2>
+  <p class="hint">Generated from the catalog. Paste the text into any Mermaid viewer or a GitHub Markdown file.</p>
+  <div class="trace-form"><select id="mmCde" aria-label="CDE"></select><button id="mmCopy">Copy Mermaid</button></div>
+  <div class="box"><div id="mmOut"></div><pre class="mm" id="mmCode"></pre></div>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const APPS=[
+ {key:"catalog",name:"CDE Catalog",zone:"Metadata and checks"},
+ {key:"dao",name:"DAO",zone:"SOO, source extract"},
+ {key:"yxy",name:"YXY",zone:"SOR, filter and map"},
+ {key:"aoc",name:"AOC",zone:"APP, derive"},
+ {key:"mis",name:"MIS Report",zone:"Report and Excel"},
+ {key:"controls",name:"Controls",zone:"Reconcile to source"}];
+const TABS=[{id:"catalog",label:"Catalog",app:"catalog"},{id:"dao",label:"DAO",app:"dao"},{id:"yxy",label:"YXY",app:"yxy"},{id:"rejects",label:"Rejected at YXY",app:"yxy"},{id:"aoc",label:"AOC",app:"aoc"},{id:"mis",label:"MIS Report",app:"mis"},{id:"controls",label:"Controls",app:"controls"}];
+let runs={},activeTab="controls",rulesInfo=null;
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const money=v=>v==null?"":Number(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+function toast(m){const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",3500)}
+async function api(p,m="GET"){const r=await fetch(p,{method:m});const b=await r.json().catch(()=>({}));if(!r.ok)throw new Error(b.detail||r.statusText);return b}
+
+function renderPipeline(){
+ $("#pipeline").innerHTML=APPS.map(a=>{const r=runs[a.key];
+  const extra=r?[r.filtered?`${r.filtered} filtered`:"",r.duplicates_removed?`${r.duplicates_removed} duplicate`:""].filter(Boolean).join(", "):"";
+  const lab=a.key==="catalog"?["CDEs","lines"]:a.key==="controls"?["controls","records"]:["records","records"];
+  return `<div class="stage ${r?"done":"pending"}"><h3>${a.name}</h3><div class="zone">${a.zone}</div>
+  <div class="flow"><span class="out">${r?r.rows_out:"-"}</span><span class="in">${r?`${lab[0]} from ${r.rows_in}`:"not run"}</span></div>
+  <div class="rej">${r&&r.rejected?`<b>${r.rejected}</b> ${a.key==="catalog"?"findings":a.key==="controls"?"failed":"rejected"}`:(r?"Nothing flagged":"")}${extra?`<br>${extra}`:""}</div>
+  <div class="row"><button data-run="${a.key}">Run</button><span class="docs"><a href="/${a.key}/docs" target="_blank" rel="noopener">API docs</a></span></div></div>`}).join("");
+ document.querySelectorAll("[data-run]").forEach(b=>b.onclick=()=>runOne(b.dataset.run,b));
+}
+async function runOne(k,b){b.disabled=true;try{await api(`/${k}/run`,"POST");await refresh();activeTab=TABS.find(t=>t.app===k).id;renderTabs();await renderPanel()}catch(e){toast(e.message)}finally{b.disabled=false}}
+async function refresh(){runs=(await api("/api/status")).runs;renderPipeline()}
+function renderTabs(){$("#tabs").innerHTML=TABS.map(t=>`<button class="tab" role="tab" aria-selected="${t.id===activeTab}" data-tab="${t.id}">${t.label}</button>`).join("");
+ document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{activeTab=b.dataset.tab;renderTabs();renderPanel()})}
+function table(cols,rows){if(!rows.length)return`<div class="empty">No records.</div>`;
+ const body=rows.map(r=>"<tr>"+cols.map(c=>`<td class="${c.cls||""}">${c.fmt?c.fmt(r):esc(r[c.key])}</td>`).join("")+"</tr>").join("");
+ return`<table><thead><tr>${cols.map(c=>`<th>${c.label}</th>`).join("")}</tr></thead><tbody>${body}</tbody></table>`}
+const sev=s=>`<span class="pill ${s==="FAIL"?"bad":s==="WARN"?"warn":"info"}">${s.toLowerCase()}</span>`;
+const st=s=>`<span class="pill ${s==="PASS"?"ok":s==="WARN"?"warn":"bad"}">${s.toLowerCase()}</span>`;
+
+async function renderPanel(){
+ const tab=TABS.find(t=>t.id===activeTab),el=$("#panel");
+ if(!runs[tab.app]){el.innerHTML=`<div class="empty">Nothing here yet. Run <b>${APPS.find(a=>a.key===tab.app).name}</b> or the full pipeline.</div>`;return}
+ const d=await api(`/${tab.app}/output`);
+ if(tab.id==="catalog"){
+  rulesInfo=rulesInfo||await api("/api/rules");
+  el.innerHTML=`<p class="hint">Where each critical data element lives at each hop, and what happens to it.</p>`+
+   table([{label:"CDE",key:"cde"},{label:"DAO (SOO)",fmt:r=>r.dao||"-"},{label:"YXY (SOR)",fmt:r=>r.yxy||"-"},{label:"AOC (APP)",fmt:r=>r.aoc||"-"},{label:"MIS Report",fmt:r=>r.mis||"-"},{label:"What happens",key:"action"}],rulesInfo.cde_map)+
+   `<h2 style="margin-top:24px">Documentation findings in the lineage sheet</h2>`+
+   table([{label:"Severity",fmt:r=>sev(r.severity)},{label:"CDE",key:"cde"},{label:"Hop",key:"hop"},{label:"Finding",key:"issue",cls:"wrap"}],d.findings);
+ }
+ if(tab.id==="dao")el.innerHTML=table(Object.keys(d.rows[0]).map(k=>({label:k,key:k})),d.rows);
+ if(tab.id==="yxy")el.innerHTML=table(Object.keys(d.rows[0]).map(k=>({label:k,key:k,fmt:r=>["outstanding_balance","interest_amt","account_gross_balance_am"].includes(k)?money(r[k]):esc(r[k])})),d.rows);
+ if(tab.id==="rejects")el.innerHTML=table([{label:"Clarity ID",key:"clrty_id"},{label:"Reason",fmt:r=>`<span class="pill bad">${esc(r.reason.replaceAll("_"," ").toLowerCase())}</span>`},{label:"settlement_am",fmt:r=>r.raw.settlement_am==null?"(blank)":money(r.raw.settlement_am)}],d.rejects)
+   +(runs.yxy.filtered?`<p class="hint" style="margin-top:12px">${runs.yxy.filtered} more rows were filtered out by the YXY filter and ${runs.yxy.duplicates_removed} duplicate was removed. Those are not rejects.</p>`:"");
+ if(tab.id==="aoc")el.innerHTML=table(Object.keys(d.rows[0]).map(k=>({label:k,key:k,cls:["settlement_amount","PIF"].includes(k)?"derived":"",fmt:r=>["outstanding_bal","interest_amount","settlement_amount"].includes(k)?money(r[k]):esc(r[k])})),d.rows)+`<p class="hint" style="margin-top:12px">Highlighted columns are derived at AOC.</p>`;
+ if(tab.id==="mis"){
+  const tot=d.rows.reduce((a,r)=>a+r["Settlement Amount"],0);
+  el.innerHTML=`<div class="kpis"><div class="kpi"><div class="v">${d.rows.length}</div><div class="l">report rows</div></div><div class="kpi"><div class="v">${money(tot)}</div><div class="l">total Settlement Amount</div></div><div class="kpi"><div class="v">${d.rows.filter(r=>r.PIF).length}</div><div class="l">Paid in Full accounts</div></div><div class="kpi"><a href="/mis/download"><button class="primary" type="button">Download MIS_14MQ.xlsx</button></a></div></div>`+
+   table(Object.keys(d.rows[0]).map(k=>({label:k,key:k,fmt:r=>["Outstanding Balance","Interest Amount","Settlement Amount"].includes(k)?money(r[k]):esc(r[k])})),d.rows);
+ }
+ if(tab.id==="controls"){
+  const s=d.summary;
+  el.innerHTML=`<div class="kpis"><div class="kpi"><div class="v">${s.passed}</div><div class="l">passed</div></div><div class="kpi"><div class="v">${s.warnings}</div><div class="l">warnings</div></div><div class="kpi"><div class="v" style="color:${s.failed?"var(--red)":"inherit"}">${s.failed}</div><div class="l">failed</div></div></div>`+
+   d.controls.map(c=>`<details class="ctl" ${c.failed&&c.status==="FAIL"?"open":""}><summary>${st(c.status)}<b>${c.id}</b> ${esc(c.name)}<span class="n">${c.failed} of ${c.checked} checks failed</span></summary>${c.breaks.length?`<div style="margin-top:10px">${table(Object.keys(c.breaks[0]).map(k=>({label:k,key:k})),c.breaks)}</div>`:`<p class="hint" style="margin:8px 0 0">No breaks.</p>`}</details>`).join("");
+ }
+}
+$("#runAll").onclick=async e=>{e.target.disabled=true;try{await api(`/api/run-all?inject_fault=${$("#fault").checked}&file_month=${encodeURIComponent($("#pMonth").value.trim())}&business_group=${encodeURIComponent($("#pGroup").value.trim())}`,"POST");toast($("#fault").checked?"Pipeline finished with an injected fault":"Pipeline finished");await refresh();activeTab="controls";renderTabs();await renderPanel();await loadSources();const m=await api("/mis/output");if(m.rows.length&&!$("#traceId").dataset.touched)$("#traceId").value=m.rows[0]["Clarity ID"];await trace()}catch(err){toast(err.message)}finally{e.target.disabled=false}};
+$("#reset").onclick=async()=>{await api("/api/reset","POST");await refresh();renderTabs();await renderPanel();$("#trace").innerHTML=`<div class="empty">Run the pipeline, then trace a record.</div>`;toast("Cleared")};
+
+async function trace(){
+ const id=$("#traceId").value.trim();if(!id)return;
+ try{const d=await api(`/api/trace/${encodeURIComponent(id)}`);
+  const cell=(c,h)=>!c?`<td class="miss">-</td>`:`<td class="${h==="aoc"&&false?"derived":""}"><span class="val">${esc(typeof c.value==="number"&&/amount|balance|bal|am$/i.test(c.field)?money(c.value):(c.value??"(none)"))}</span><span class="fld">${esc(c.field)}</span></td>`;
+  let note="";
+  if(d.rejected.length)note=`<p><span class="pill bad">rejected at YXY</span> ${esc(d.rejected[0].reason.replaceAll("_"," ").toLowerCase())}</p>`;
+  else if(d.filtered_out)note=`<p><span class="pill warn">filtered out at YXY</span> business group or file month did not match the filter, so it never reaches AOC or the report.</p>`;
+  else note=`<p><span class="pill ok">reached ${d.reached.map(x=>x.toUpperCase()).join(", ")}</span></p>`;
+  $("#trace").innerHTML=`<b>Clarity ID ${d.clrty_id}</b>${note}`+(d.reached.length>1?`<table><thead><tr><th>CDE</th><th>DAO</th><th>YXY</th><th>AOC</th><th>MIS Report</th><th>What happens</th></tr></thead><tbody>${d.rows.map(r=>`<tr><td>${esc(r.cde)}</td>${cell(r.dao,"dao")}${cell(r.yxy,"yxy")}${cell(r.aoc,"aoc")}${cell(r.mis,"mis")}<td class="wrap">${esc(r.action)}</td></tr>`).join("")}</tbody></table>`:"");
+ }catch(e){$("#trace").innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+}
+$("#traceId").oninput=()=>{$("#traceId").dataset.touched=1};
+$("#traceForm").onsubmit=e=>{e.preventDefault();trace()};
+
+async function mermaidView(){
+ const cde=$("#mmCde").value;const d=await api(cde?`/catalog/mermaid/${encodeURIComponent(cde)}`:"/catalog/mermaid");
+ $("#mmCode").textContent=d.mermaid;$("#mmOut").innerHTML="";
+ try{const m=await import("https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs");m.default.initialize({startOnLoad:false});
+  const r=await m.default.render("mm"+Date.now(),d.mermaid);$("#mmOut").innerHTML=r.svg}catch(e){$("#mmOut").innerHTML=`<p class="hint">Diagram preview needs internet access. The Mermaid text is below.</p>`}
+}
+$("#mmCde").onchange=mermaidView;
+$("#mmCopy").onclick=()=>{navigator.clipboard.writeText($("#mmCode").textContent);toast("Mermaid copied")};
+
+async function loadSources(){
+ const s=await api("/api/status");
+ const f=x=>x.kind==="uploaded"?`Using uploaded file <b>${esc(x.filename)}</b> (${x.rows} rows)`:`Using built-in sample data (${x.rows} rows)`;
+ $("#daoSrc").innerHTML=f(s.sources.dao);$("#accSrc").innerHTML=f(s.sources.accounts);
+ $("#pMonth").value=s.params.file_month;$("#pGroup").value=s.params.business_group;
+}
+async function upload(url,input){
+ const file=input.files[0];if(!file)return;
+ const fd=new FormData();fd.append("file",file);
+ try{const r=await fetch(url,{method:"POST",body:fd});const b=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(b.detail||r.statusText);toast(`Uploaded ${b.filename} (${b.rows} rows). Run the pipeline to use it.`);await loadSources()}
+ catch(e){toast(e.message)}finally{input.value=""}
+}
+$("#daoFile").onchange=e=>upload("/dao/upload",e.target);
+$("#accFile").onchange=e=>upload("/yxy/upload-account-master",e.target);
+$("#useSample").onclick=async()=>{await api("/api/reset-sources","POST");await loadSources();toast("Back to the built-in sample data")};
+
+(async()=>{rulesInfo=await api("/api/rules");
+ $("#mmCde").innerHTML=`<option value="">All CDEs</option>`+rulesInfo.cde_map.map(m=>`<option>${esc(m.cde)}</option>`).join("");
+ $("#mmCde").value="Settlement Amount";await mermaidView();await loadSources();await refresh();renderTabs();await renderPanel()})();
+</script>
+</body>
+</html>
