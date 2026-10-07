@@ -46,7 +46,7 @@ On the page, under **Source data and parameters**, download the sample CSVs to s
 
 - All built-in data is made up. It uses the real column names but no client information.
 - Results are stored in SQLite (`lineage.db`, not committed). For production volumes, use a proper database.
-- Do not commit real client data to GitHub.
+
 
 ## Diagrams
 
